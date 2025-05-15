@@ -3,3 +3,10 @@
 
 .conda
 .DS_Store
+
+# Other common files
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
