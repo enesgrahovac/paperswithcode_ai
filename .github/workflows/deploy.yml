@@ -2,7 +2,13 @@ name: Build-&-Deploy
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+    paths:
+      # run only if a file under /backend/ was modified/added/removed
+      - "backend/**"
+      # still run if you edit this workflow itself
+      - ".github/workflows/deploy.yml"
 
 jobs:
   deploy:
