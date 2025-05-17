@@ -34,7 +34,7 @@ jobs:
           rm -rf "$ART_DIR" && mkdir -p "$ART_DIR"
 
           # Each sub-folder inside backend/lambdas represents one Lambda fn
-          for fn_dir in backend/lambdas/*/ ; do
+          for fn_dir in backend/aws/lambdas/*/ ; do
             [ -d "${fn_dir}" ] || continue         # skip if none
             fn_name=$(basename "${fn_dir}")
             build_dir=$(mktemp -d)
