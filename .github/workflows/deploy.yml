@@ -1,0 +1,91 @@
+name: Build-&-Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write # needed for OIDC
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # ─────────────────────────────────────────────
+      # 1. Checkout the repo
+      - uses: actions/checkout@v3
+
+      # ─────────────────────────────────────────────
+      # 2. Configure AWS credentials through OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ─────────────────────────────────────────────
+      # 3. Package every Lambda into its own ZIP
+      - name: Build Lambda ZIPs
+        run: |
+          set -euo pipefail
+          ART_DIR="backend/infrastructure/artifacts"
+          rm -rf "$ART_DIR" && mkdir -p "$ART_DIR"
+
+          # Each sub-folder inside backend/lambdas represents one Lambda fn
+          for fn_dir in backend/lambdas/*/ ; do
+            [ -d "${fn_dir}" ] || continue         # skip if none
+            fn_name=$(basename "${fn_dir}")
+            build_dir=$(mktemp -d)
+
+            echo "⏳  Building $fn_name"
+
+            # 3a. Pull in source files
+            cp -r "${fn_dir}"/*.py "${build_dir}/"
+
+            # 3b. Vendor Python deps, if any
+            if [[ -f "${fn_dir}/requirements.txt" ]]; then
+              pip install -q -r "${fn_dir}/requirements.txt" -t "${build_dir}"
+            fi
+
+            # 3c. Zip it up
+            (
+              cd "${build_dir}"
+              zip -qr "${GITHUB_WORKSPACE}/${ART_DIR}/${fn_name}.zip" .
+            )
+
+            echo "✅  ${fn_name}.zip created"
+          done
+
+      # ─────────────────────────────────────────────
+      # 4. Set up Terraform
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.2 # or whichever version you need
+
+      # ─────────────────────────────────────────────
+      # 5. Terraform init / validate / plan
+      - name: Terraform Init
+        working-directory: backend/infrastructure
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        working-directory: backend/infrastructure
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: backend/infrastructure
+        run: terraform plan -input=false
+
+      # ─────────────────────────────────────────────
+      # 6. Terraform Apply   (auto-approve because it's main)
+      - name: Terraform Apply
+        working-directory: backend/infrastructure
+        run: terraform apply -auto-approve -input=false
