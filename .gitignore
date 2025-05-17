@@ -14,3 +14,7 @@
 # Ignore build artefacts
 *.zip
 backend/infrastructure/artifacts/
+
+# ignore .env files
+.env
+.env.*

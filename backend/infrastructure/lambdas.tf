@@ -1,35 +1,16 @@
 locals {
-  lambda_src = "${path.module}/../lambda/hello"
+  lambdas = fileset("${path.module}/artifacts", "*.zip")
 }
 
-resource "aws_iam_role" "lambda_role" {
-  name               = "hello-lambda-role"
-  assume_role_policy = data.aws_iam_policy_document.assume.json
-}
+resource "aws_lambda_function" "all" {
+  for_each         = { for f in local.lambdas : replace(f, ".zip", "") => f }
 
-data "aws_iam_policy_document" "assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-  }
-}
+  function_name    = each.key
+  runtime          = "python3.10"
+  handler          = "main.handler"
 
-resource "aws_lambda_function" "hello" {
-  function_name = "hello-tf"
-  filename      = data.archive_file.hello_zip.output_path
-  source_code_hash = data.archive_file.hello_zip.output_base64sha256
-  handler       = "handler.lambda_handler"
-  runtime       = "python3.10"
-  role          = aws_iam_role.lambda_role.arn
-  timeout       = 10
-  memory_size   = 128
-}
+  filename         = "${path.module}/artifacts/${each.value}"
+  source_code_hash = filebase64sha256("${path.module}/artifacts/${each.value}")
 
-data "archive_file" "hello_zip" {
-  type        = "zip"
-  source_dir  = local.lambda_src
-  output_path = "${path.module}/build/hello.zip"
+  role             = aws_iam_role.lambda_exec.arn
 }
