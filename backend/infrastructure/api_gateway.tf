@@ -35,7 +35,10 @@ resource "aws_apigatewayv2_route" "lambda" {
 
 # 5️⃣  Allow API Gateway to call the function
 resource "aws_lambda_permission" "apigw" {
-  for_each      = var.api_routes
+  for_each = {
+    for r in var.api_routes :
+    "${r.method} ${r.path}" => r
+  }
 
   statement_id  = "AllowAPIGWInvoke-${each.value.lambda}-${each.value.method}-${replace(each.value.path, "/", "-")}"
   action        = "lambda:InvokeFunction"
