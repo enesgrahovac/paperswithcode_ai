@@ -10,3 +10,7 @@
 *.pyd
 *.pyw
 *.pyz
+
+# Ignore build artefacts
+*.zip
+backend/infrastructure/artifacts/
