@@ -35,8 +35,8 @@ resource "aws_iam_role_policy" "lambda_rds_data" {
           "rds-data:*"
         ]
         Resource = [
-          aws_rds_cluster.papers_data.arn,
-          "${aws_rds_cluster.papers_data.arn}:*"
+          data.aws_rds_cluster.papers_data.arn,
+          "${data.aws_rds_cluster.papers_data.arn}:*"
         ]
       },
       {
@@ -47,3 +47,5 @@ resource "aws_iam_role_policy" "lambda_rds_data" {
     ]
   })
 }
+
+

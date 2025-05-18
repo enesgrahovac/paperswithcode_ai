@@ -4,8 +4,8 @@ import boto3
 rds = boto3.client("rds-data")
 
 CLUSTER_ARN = os.environ["CLUSTER_ARN"]
-SECRET_ARN  = os.environ["SECRET_ARN"]
 DB_NAME     = os.environ["DB_NAME"]
+DB_USER     = os.environ["DB_USER"]
 
 def handler(event, context):
     qparams = event.get("queryStringParameters") or {}
@@ -19,10 +19,10 @@ def handler(event, context):
 
     res = rds.execute_statement(
         resourceArn = CLUSTER_ARN,
-        secretArn   = SECRET_ARN,
         database    = DB_NAME,
         sql         = sql,
-        parameters  = params
+        parameters  = params,
+        dbUser      = DB_USER
     )
 
     if not res["records"]:
