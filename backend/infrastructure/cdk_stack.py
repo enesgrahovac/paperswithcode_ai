@@ -20,9 +20,11 @@ class PapersWithCodeStack(Stack):
         cluster_endpoint = os.environ["CLUSTER_ENDPOINT"]
         db_secret_name = os.environ["DB_SECRET_NAME"]
         aurora_security_group = os.environ["AURORA_SECURITY_GROUP"]
+        vpc_id = os.environ["VPC_ID"]
 
         # Reference the VPC (replace with your VPC ID or lookup logic)
-        vpc = ec2.Vpc.from_lookup(self, "Vpc", is_default=True)
+        # vpc = ec2.Vpc.from_lookup(self, "Vpc", is_default=True)
+        vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id=vpc_id)
         # Or: vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id="vpc-xxxx", ...)
 
         # Reference the security group used by Aurora (replace with your SG ID)
