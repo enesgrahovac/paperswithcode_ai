@@ -110,6 +110,7 @@ class PapersWithCodeStack(Stack):
                 vpc=vpc,
                 vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
                 security_groups=[db_sg],
+                allow_public_subnet=True
             )
 
         # 5. API Gateway HTTP API
