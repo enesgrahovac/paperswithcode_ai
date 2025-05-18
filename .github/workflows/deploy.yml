@@ -19,6 +19,7 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       CLUSTER_ENDPOINT: ${{ secrets.CLUSTER_ENDPOINT }}
       DB_SECRET_NAME: ${{ secrets.DB_SECRET_NAME }}
+      AURORA_SECURITY_GROUP: ${{ secrets.AURORA_SECURITY_GROUP }}
 
     steps:
       - uses: actions/checkout@v3
