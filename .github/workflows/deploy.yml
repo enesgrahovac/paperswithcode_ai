@@ -38,6 +38,10 @@ jobs:
         working-directory: backend/infrastructure
         run: cdk synth
 
+      - name: CDK Bootstrap
+        working-directory: backend/infrastructure
+        run: cdk bootstrap
+
       - name: CDK Deploy
         working-directory: backend/infrastructure
         run: cdk deploy --require-approval never
