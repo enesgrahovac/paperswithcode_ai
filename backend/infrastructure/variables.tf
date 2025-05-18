@@ -7,6 +7,8 @@ variable "api_routes" {
   }))
   default = [
     { lambda = "hello_world", method = "GET", path = "/hello" },
+    { lambda = "add_dummy",   method = "POST", path = "/dummy" },
+    { lambda = "get_dummy",   method = "GET",  path = "/dummy" },
     # Add more routes here ↓
     # { lambda = "other_fn",   method = "POST", path = "/submit" },
   ]

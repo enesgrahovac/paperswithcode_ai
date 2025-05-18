@@ -21,3 +21,29 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_exec" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
+
+resource "aws_iam_role_policy" "lambda_rds_data" {
+  name = "lambda-rds-data"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "rds-data:*"
+        ]
+        Resource = [
+          aws_rds_cluster.papers_data.arn,
+          "${aws_rds_cluster.papers_data.arn}:*"
+        ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = aws_secretsmanager_secret.papers_db.arn
+      }
+    ]
+  })
+}

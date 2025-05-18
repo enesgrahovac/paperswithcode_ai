@@ -29,7 +29,7 @@ resource "aws_apigatewayv2_route" "lambda" {
   for_each  = aws_apigatewayv2_integration.lambda
 
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = each.key                       # e.g. "GET /hello"
+  route_key = each.key        
   target    = "integrations/${each.value.id}"
 }
 
