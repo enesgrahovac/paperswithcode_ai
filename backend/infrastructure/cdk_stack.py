@@ -24,7 +24,7 @@ class PapersWithCodeStack(Stack):
 
         # Reference the VPC (replace with your VPC ID or lookup logic)
         # vpc = ec2.Vpc.from_lookup(self, "Vpc", is_default=True)
-        vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id=vpc_id)
+        vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id=vpc_id, availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"])
         # Or: vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id="vpc-xxxx", ...)
 
         # Reference the security group used by Aurora (replace with your SG ID)
