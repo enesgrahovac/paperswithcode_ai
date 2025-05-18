@@ -56,12 +56,12 @@ class PapersWithCodeStack(Stack):
         lambda_configs = [
             {
                 "name": "hello_world",
-                "path": "../backend/aws/lambdas/hello_world",
+                "path": "../aws/lambdas/hello_world",
                 "env": {}
             },
             {
                 "name": "add_dummy",
-                "path": "../backend/aws/lambdas/add_dummy",
+                "path": "../aws/lambdas/add_dummy",
                 "env": {
                     "CLUSTER_ARN": cluster.cluster_arn,
                     "SECRET_ARN": db_secret.secret_arn,
@@ -71,7 +71,7 @@ class PapersWithCodeStack(Stack):
             },
             {
                 "name": "get_dummy",
-                "path": "../backend/aws/lambdas/get_dummy",
+                "path": "../aws/lambdas/get_dummy",
                 "env": {
                     "CLUSTER_ARN": cluster.cluster_arn,
                     "SECRET_ARN": db_secret.secret_arn,
