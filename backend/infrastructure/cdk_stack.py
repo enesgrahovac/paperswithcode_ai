@@ -21,11 +21,16 @@ class PapersWithCodeStack(Stack):
         db_secret_name = os.environ["DB_SECRET_NAME"]
         aurora_security_group = os.environ["AURORA_SECURITY_GROUP"]
         vpc_id = os.environ["VPC_ID"]
+        public_subnet_ids = os.environ["PUBLIC_SUBNET_IDS"].split(",")
+
 
         # Reference the VPC (replace with your VPC ID or lookup logic)
-        # vpc = ec2.Vpc.from_lookup(self, "Vpc", is_default=True)
-        vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id=vpc_id, availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"])
-        # Or: vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id="vpc-xxxx", ...)
+        vpc = ec2.Vpc.from_vpc_attributes(
+            self, 
+            "Vpc", 
+            vpc_id=vpc_id, 
+            availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"], 
+            public_subnet_ids=public_subnet_ids)
 
         # Reference the security group used by Aurora (replace with your SG ID)
         db_sg = ec2.SecurityGroup.from_security_group_id(self, "DbSG", aurora_security_group)
@@ -103,7 +108,7 @@ class PapersWithCodeStack(Stack):
                 timeout=Duration.seconds(30),
                 environment=cfg["env"],
                 vpc=vpc,
-                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
                 security_groups=[db_sg],
             )
 

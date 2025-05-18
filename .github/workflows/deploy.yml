@@ -22,6 +22,7 @@ jobs:
       DB_SECRET_NAME: ${{ secrets.DB_SECRET_NAME }}
       AURORA_SECURITY_GROUP: ${{ secrets.AURORA_SECURITY_GROUP }}
       VPC_ID: ${{ secrets.VPC_ID }}
+      PUBLIC_SUBNET_IDS: ${{ secrets.PUBLIC_SUBNET_IDS }}
 
     steps:
       - uses: actions/checkout@v3
