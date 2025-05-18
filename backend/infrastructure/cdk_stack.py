@@ -6,6 +6,7 @@ from aws_cdk import (
     aws_iam as iam,
     aws_secretsmanager as secretsmanager,
     aws_rds as rds,
+    aws_ec2 as ec2,
     CfnOutput,
     Duration,
 )
@@ -18,6 +19,14 @@ class PapersWithCodeStack(Stack):
 
         cluster_endpoint = os.environ["CLUSTER_ENDPOINT"]
         db_secret_name = os.environ["DB_SECRET_NAME"]
+        aurora_security_group = os.environ["AURORA_SECURITY_GROUP"]
+
+        # Reference the VPC (replace with your VPC ID or lookup logic)
+        vpc = ec2.Vpc.from_lookup(self, "Vpc", is_default=True)
+        # Or: vpc = ec2.Vpc.from_vpc_attributes(self, "Vpc", vpc_id="vpc-xxxx", ...)
+
+        # Reference the security group used by Aurora (replace with your SG ID)
+        db_sg = ec2.SecurityGroup.from_security_group_id(self, "DbSG", aurora_security_group)
 
         # 1. Reference existing Aurora Serverless cluster
         cluster = rds.DatabaseCluster.from_database_cluster_attributes(
@@ -25,7 +34,7 @@ class PapersWithCodeStack(Stack):
             cluster_identifier="papers-data",
             cluster_endpoint_address=cluster_endpoint,
             port=5432,
-            security_groups=[],
+            security_groups=[db_sg],
             reader_endpoint_address=None
         )
 
@@ -90,7 +99,10 @@ class PapersWithCodeStack(Stack):
                 code=_lambda.Code.from_asset(cfg["path"]),
                 role=lambda_role,
                 timeout=Duration.seconds(30),
-                environment=cfg["env"]
+                environment=cfg["env"],
+                vpc=vpc,
+                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+                security_groups=[db_sg],
             )
 
         # 5. API Gateway HTTP API
