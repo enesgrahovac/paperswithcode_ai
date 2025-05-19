@@ -12,7 +12,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 import os
-from aws_cdk.aws_lambda_python import PythonFunction
+from aws_cdk.aws_lambda_python_alpha import PythonFunction
 
 class PapersWithCodeStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs):
