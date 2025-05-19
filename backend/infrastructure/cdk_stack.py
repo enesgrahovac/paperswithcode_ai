@@ -81,6 +81,11 @@ class PapersWithCodeStack(Stack):
             ],
             resources=["*"]
         ))
+        # Add permission for IAM DB authentication
+        lambda_role.add_to_policy(iam.PolicyStatement(
+            actions=["rds-db:connect"],
+            resources=[f"arn:aws:rds-db:{self.region}:{self.account}:dbuser:*/{os.environ.get('DBUserName', 'lambda_user')}"]
+        ))
 
         # 4. Lambda functions
         lambda_configs = [
@@ -93,10 +98,9 @@ class PapersWithCodeStack(Stack):
                 "name": "add_dummy",
                 "path": "../aws/lambdas/add_dummy",
                 "env": {
-                    "CLUSTER_ARN": cluster.cluster_arn,
-                    "SECRET_ARN": db_secret.secret_arn,
-                    "DB_NAME": "postgres",
-                    "DB_USER": "lambda_user"
+                    "DBEndPoint": cluster.cluster_endpoint_address,
+                    "DatabaseName": "postgres",
+                    "DBUserName": "lambda_user"
                 }
             },
             {
