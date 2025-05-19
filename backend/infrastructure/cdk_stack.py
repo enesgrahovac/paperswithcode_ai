@@ -127,7 +127,7 @@ class PapersWithCodeStack(Stack):
                 timeout=Duration.seconds(30),
                 environment=cfg["env"],
                 vpc=vpc,
-                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
                 security_groups=[db_sg],
                 allow_public_subnet=True
             )
