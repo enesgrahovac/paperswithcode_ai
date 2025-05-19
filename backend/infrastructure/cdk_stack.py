@@ -108,8 +108,7 @@ class PapersWithCodeStack(Stack):
                 "name": "get_dummy",
                 "path": "../aws/lambdas/get_dummy",
                 "env": {
-                    "CLUSTER_ARN": cluster.cluster_arn,
-                    "SECRET_ARN": db_secret.secret_arn,
+                    "CLUSTER_ENDPOINT": cluster.cluster_endpoint.hostname,
                     "DB_NAME": "postgres",
                     "DB_USER": "lambda_user"
                 }
