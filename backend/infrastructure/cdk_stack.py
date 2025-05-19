@@ -12,6 +12,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 import os
+from aws_cdk.aws_lambda_python import PythonFunction
 
 class PapersWithCodeStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs):
@@ -117,11 +118,12 @@ class PapersWithCodeStack(Stack):
 
         lambdas = {}
         for cfg in lambda_configs:
-            lambdas[cfg["name"]] = _lambda.Function(
+            lambdas[cfg["name"]] = PythonFunction(
                 self, f"{cfg['name'].capitalize()}Lambda",
+                entry=cfg["path"],
                 runtime=_lambda.Runtime.PYTHON_3_10,
-                handler="main.handler",
-                code=_lambda.Code.from_asset(cfg["path"]),
+                index="main.py",
+                handler="handler",
                 role=lambda_role,
                 timeout=Duration.seconds(30),
                 environment=cfg["env"],
