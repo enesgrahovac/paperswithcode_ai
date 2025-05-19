@@ -1,3 +1,4 @@
 aws-cdk-lib
 constructs
 pg8000
+aws-cdk.aws-lambda-python-alpha
