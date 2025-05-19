@@ -31,7 +31,7 @@ class PapersWithCodeStack(Stack):
             "Vpc", 
             vpc_id=vpc_id, 
             availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"], 
-            public_subnet_ids=public_subnet_ids)
+            private_subnet_ids=public_subnet_ids)
 
         # Reference the security group used by Aurora (replace with your SG ID)
         db_sg = ec2.SecurityGroup.from_security_group_id(self, "DbSG", aurora_security_group)
