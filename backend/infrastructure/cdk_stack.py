@@ -24,14 +24,14 @@ class PapersWithCodeStack(Stack):
         vpc_id = os.environ["VPC_ID"]
         subnet_ids = os.environ["PUBLIC_SUBNET_IDS"].split(",")
 
-
-        # Reference the VPC (replace with your VPC ID or lookup logic)
+        # Reference your existing VPC
         vpc = ec2.Vpc.from_vpc_attributes(
-            self, 
-            "Vpc", 
-            vpc_id=vpc_id, 
-            availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"], 
-            private_subnet_ids=subnet_ids)
+            self, "Vpc",
+            vpc_id=vpc_id,
+            availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"],
+            private_subnet_ids=subnet_ids,
+            public_subnet_ids=subnet_ids,
+        )
 
         # Reference the security group used by Aurora (replace with your SG ID)
         db_sg = ec2.SecurityGroup.from_security_group_id(self, "DbSG", aurora_security_group)
@@ -155,3 +155,34 @@ class PapersWithCodeStack(Stack):
 
         # 7. Output API URL
         CfnOutput(self, "ApiBaseUrl", value=http_api.api_endpoint)
+
+        # Create an Elastic IP for the NAT Gateway
+        eip = ec2.CfnEIP(self, "NatEip")
+
+        # Create the NAT Gateway in a public subnet
+        nat_gw = ec2.CfnNatGateway(
+            self, "NatGateway",
+            subnet_id=subnet_ids[0],  # Use the first public subnet
+            allocation_id=eip.attr_allocation_id
+        )
+
+        # Update the route table for each private subnet
+        for i, subnet_id in enumerate(subnet_ids):
+            # Find the route table for the subnet
+            route_table = ec2.CfnRouteTable(
+                self, f"PrivateRouteTable{i}",
+                vpc_id=vpc.vpc_id
+            )
+            # Associate the route table with the subnet
+            ec2.CfnSubnetRouteTableAssociation(
+                self, f"PrivateSubnetAssoc{i}",
+                subnet_id=subnet_id,
+                route_table_id=route_table.ref
+            )
+            # Add a route to the NAT Gateway
+            ec2.CfnRoute(
+                self, f"PrivateRoute{i}",
+                route_table_id=route_table.ref,
+                destination_cidr_block="0.0.0.0/0",
+                nat_gateway_id=nat_gw.ref
+            )
