@@ -99,9 +99,9 @@ class PapersWithCodeStack(Stack):
                 "name": "add_dummy",
                 "path": "../aws/lambdas/add_dummy",
                 "env": {
-                    "DBEndPoint": cluster.cluster_endpoint.hostname,
-                    "DatabaseName": "postgres",
-                    "DBUserName": "lambda_user"
+                    "CLUSTER_ENDPOINT": cluster.cluster_endpoint.hostname,
+                    "DB_NAME": "postgres",
+                    "DB_USER": "lambda_user"
                 }
             },
             {
