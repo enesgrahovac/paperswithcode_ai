@@ -11,7 +11,9 @@ DB_NAME     = os.environ["DB_NAME"]
 
 def handler(event, context):
     row_id = str(uuid.uuid4())
+    print(f"row_id: {row_id}")
     now    = datetime.utcnow().isoformat()
+    print(f"Now: {now}")
 
     sql = "INSERT INTO dummy (id, created_at) VALUES(:id, :ts)"
     params = [
