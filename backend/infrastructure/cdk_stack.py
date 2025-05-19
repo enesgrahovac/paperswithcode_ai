@@ -69,6 +69,18 @@ class PapersWithCodeStack(Stack):
                 "arn:aws:secretsmanager:us-east-2:515517371250:secret:rds-db-credentials/cluster-YMG2RGC73UOGVJLFNIHZH7EZQM/papers_code_user/1747518158325"
             ]
         ))
+        # Add EC2 permissions for Lambda VPC access
+        lambda_role.add_to_policy(iam.PolicyStatement(
+            actions=[
+                "ec2:CreateNetworkInterface",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DescribeVpcs",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeSecurityGroups"
+            ],
+            resources=["*"]
+        ))
 
         # 4. Lambda functions
         lambda_configs = [
