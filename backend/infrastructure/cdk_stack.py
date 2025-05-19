@@ -65,7 +65,9 @@ class PapersWithCodeStack(Stack):
         ))
         lambda_role.add_to_policy(iam.PolicyStatement(
             actions=["secretsmanager:GetSecretValue"],
-            resources=[db_secret.secret_arn]
+            resources=[
+                "arn:aws:secretsmanager:us-east-2:515517371250:secret:rds-db-credentials/cluster-YMG2RGC73UOGVJLFNIHZH7EZQM/papers_code_user/1747518158325"
+            ]
         ))
 
         # 4. Lambda functions
