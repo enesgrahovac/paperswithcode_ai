@@ -20,7 +20,7 @@ def handler(event, context):
         {"name": "id", "value": {"stringValue": row_id}},
         {"name": "ts", "value": {"stringValue": now}}
     ]
-
+    print(f"sql: {sql}")
     rds.execute_statement(
         resourceArn = CLUSTER_ARN,
         secretArn   = SECRET_ARN,
