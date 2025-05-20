@@ -19,6 +19,7 @@ class PapersWithCodeStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         cluster_endpoint = os.environ["CLUSTER_ENDPOINT"]
+        cluster_resource_identifier = os.environ["CLUSTER_RESOURCE_IDENTIFIER"]
         db_secret_name = os.environ["DB_SECRET_NAME"]
         aurora_security_group = os.environ["AURORA_SECURITY_GROUP"]
         vpc_id = os.environ["VPC_ID"]
@@ -40,6 +41,7 @@ class PapersWithCodeStack(Stack):
             self, "PapersDataCluster",
             cluster_identifier="papers-data",
             cluster_endpoint_address=cluster_endpoint,
+            cluster_resource_identifier=cluster_resource_identifier,
             port=5432,
             security_groups=[db_sg],
             reader_endpoint_address=None
@@ -58,11 +60,7 @@ class PapersWithCodeStack(Stack):
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole")
             ]
         )
-        # Attach custom policy for RDS Data and SecretsManager
-        lambda_role.add_to_policy(iam.PolicyStatement(
-            actions=["rds-data:*"],
-            resources=[cluster.cluster_arn, f"{cluster.cluster_arn}:*"]
-        ))
+       
         lambda_role.add_to_policy(iam.PolicyStatement(
             actions=["secretsmanager:GetSecretValue"],
             resources=[
@@ -84,7 +82,9 @@ class PapersWithCodeStack(Stack):
         # Add permission for IAM DB authentication
         lambda_role.add_to_policy(iam.PolicyStatement(
             actions=["rds-db:connect"],
-            resources=[f"arn:aws:rds-db:{self.region}:{self.account}:dbuser:*/{os.environ.get('DBUserName', 'lambda_user')}"]
+            resources=[
+                f"arn:aws:rds-db:{self.region}:{self.account}:dbuser:{cluster.cluster_resource_identifier}/{db_user}"
+            ]
         ))
 
         # 4. Lambda functions
