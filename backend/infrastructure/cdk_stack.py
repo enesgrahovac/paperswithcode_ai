@@ -40,6 +40,7 @@ class PapersWithCodeStack(Stack):
         db_secret_name              = os.environ.get("DB_SECRET_NAME", "")
         db_user                     = os.environ.get("DB_USER", "lambda_user")
 
+
         # ──────────────────────────────────────────────────────────────
         # ░█░█░█▀▀░█▀█░█▀▀░█▀█
         # ░█▀█░█▀▀░█░█░█░░░█░█
