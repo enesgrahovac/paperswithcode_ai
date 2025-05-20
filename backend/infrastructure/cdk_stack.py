@@ -30,7 +30,6 @@ class PapersWithCodeStack(Stack):
             vpc_id=vpc_id,
             availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"],
             private_subnet_ids=subnet_ids,
-            public_subnet_ids=subnet_ids,
         )
 
         # Reference the security group used by Aurora (replace with your SG ID)
