@@ -4,6 +4,7 @@ import pg8000.dbapi
 import ssl
 import logging
 from datetime import datetime
+import traceback
 
 # Set up logging
 logger = logging.getLogger()
@@ -46,7 +47,8 @@ def get_connection():
         conn.autocommit = True
         return conn
     except Exception as e:
-        logger.error(f"Connection error: {str(e)}")
+        logger.error(f"Connection error: {type(e).__name__}: {str(e)}")
+        logger.error(traceback.format_exc())
         return None
 
 def handler(event, context):
