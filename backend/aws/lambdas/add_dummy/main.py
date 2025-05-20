@@ -22,8 +22,11 @@ def get_connection():
         
         # Required environment variables
         db_endpoint = os.environ.get("CLUSTER_ENDPOINT")
+        print(f"db_endpoint: {db_endpoint}")
         database_name = os.environ.get("DB_NAME")
+        print(f"database_name: {database_name}")
         db_username = os.environ.get("DB_USER")
+        print(f"db_username: {db_username}")
         
         # SSL context with system certificates
         ssl_context = ssl.create_default_context()
