@@ -98,7 +98,7 @@ class PapersWithCodeStack(Stack):
         for svc in [
             ec2.InterfaceVpcEndpointAwsService.RDS,
             ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-            ec2.InterfaceVpcEndpointAwsService.LOGS,  # CW Logs write path
+            ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,  # CW Logs write path
         ]:
             ec2.InterfaceVpcEndpoint(
                 self,
