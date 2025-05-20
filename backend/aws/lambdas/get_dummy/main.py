@@ -65,7 +65,7 @@ def handler(event, context):
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "id":          record[0],
+                "id":          str(record[0]),
                 "created_at":  record[1]
             })
         }
