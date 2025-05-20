@@ -26,75 +26,64 @@ class PapersWithCodeStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # ──────────────────────────────────────────────────────────────
-        # ░█▀▀░█▀█░█░░░█░█░█▀█░█▀▄░█▀█░█▀▀
-        # ░█░░░█░█░█░░░█░█░█▀█░█▀▄░█▀█░▀▀█
-        # ░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀░▀░▀░▀░▀▀▀
-        # ----------------------------------------------------------------
-        # Environment variables supplied from cdk.json / shell
-        # ----------------------------------------------------------------
+        # Environment variables (all must be supplied via cdk.json or shell)
+        # ──────────────────────────────────────────────────────────────
         vpc_id                      = os.environ["VPC_ID"]
+        vpc_cidr_block              = os.environ["VPC_CIDR_BLOCK"]  # e.g. "10.0.0.0/16"
         private_subnet_ids          = os.environ["PRIVATE_SUBNET_IDS"].split(",")
         aurora_security_group_id    = os.environ["AURORA_SECURITY_GROUP"]
-        cluster_endpoint            = os.environ["CLUSTER_ENDPOINT"]                # e.g. papers-data.cluster-xyz.us-east-1.rds.amazonaws.com
-        cluster_resource_identifier = os.environ["CLUSTER_RESOURCE_IDENTIFIER"]      # e.g. cluster-ABCD1234567890XYZ
+        cluster_endpoint            = os.environ["CLUSTER_ENDPOINT"]
+        cluster_resource_identifier = os.environ["CLUSTER_RESOURCE_IDENTIFIER"]
         db_secret_name              = os.environ.get("DB_SECRET_NAME", "")
         db_user                     = os.environ.get("DB_USER", "lambda_user")
 
-
         # ──────────────────────────────────────────────────────────────
-        # ░█░█░█▀▀░█▀█░█▀▀░█▀█
-        # ░█▀█░█▀▀░█░█░█░░░█░█
-        # ░▀░▀░▀▀▀░▀░▀░▀▀▀░▀░▀
-        # ----------------------------------------------------------------
-        # Import existing VPC + Aurora SG
-        # ----------------------------------------------------------------
+        # Import VPC and create / import security groups
+        # ──────────────────────────────────────────────────────────────
         vpc = ec2.Vpc.from_vpc_attributes(
             self,
             "ImportedVpc",
             vpc_id=vpc_id,
             availability_zones=["us-east-1a", "us-east-1b", "us-east-1c"],
             private_subnet_ids=private_subnet_ids,
+            vpc_cidr_block=vpc_cidr_block,
         )
 
         aurora_sg = ec2.SecurityGroup.from_security_group_id(
             self, "AuroraSG", aurora_security_group_id
         )
 
-        # Security group dedicated to Lambdas
         lambda_sg = ec2.SecurityGroup(
-            self, "LambdaSG", vpc=vpc, description="SG for Aurora‑access Lambdas", allow_all_outbound=True
+            self,
+            "LambdaSG",
+            vpc=vpc,
+            description="SG for Aurora‑access Lambdas",
+            allow_all_outbound=True,
         )
-        # Permit Lambda → Aurora:5432
         aurora_sg.add_ingress_rule(lambda_sg, ec2.Port.tcp(5432), "Lambda to Aurora")
 
         # ──────────────────────────────────────────────────────────────
-        # ░█▀█░█▀▀░█▀▄░█▀▀░█▀█░█▀█░█░█
-        # ░█▀█░█▀▀░█░█░█░░░█▀█░█▀█░█░█
-        # ░▀░▀░▀▀▀░▀▀░░▀▀▀░▀░▀░▀░▀░▀▀▀
-        # ----------------------------------------------------------------
-        # Import existing Aurora Serverless v2 cluster (PostgreSQL)
-        # ----------------------------------------------------------------
+        # Import Aurora Cluster
+        # ──────────────────────────────────────────────────────────────
         cluster = rds.DatabaseCluster.from_database_cluster_attributes(
             self,
             "AuroraCluster",
-            cluster_identifier="papers-data",  # cluster identifier (DB cluster id)
+            cluster_identifier="papers-data",
             cluster_endpoint_address=cluster_endpoint,
             cluster_resource_identifier=cluster_resource_identifier,
             port=5432,
             security_groups=[aurora_sg],
         )
 
-        # Optional: reference the secret in case you want to retrieve it elsewhere
+        # Optional Secret reference
         if db_secret_name:
-            secretsmanager.Secret.from_secret_name_v2(self, "PapersDbSecret", db_secret_name)
+            secretsmanager.Secret.from_secret_name_v2(
+                self, "PapersDbSecret", db_secret_name
+            )
 
         # ──────────────────────────────────────────────────────────────
-        # ░█░█░█▀█░█░█░█░░░█▀▀
-        # ░█▀█░█▀█░█░█░█░░░▀▀█
-        # ░▀░▀░▀░▀░▀▀▀░▀▀▀░▀▀▀
-        # ----------------------------------------------------------------
-        # VPC Interface Endpoints so the Lambdas reach AWS APIs privately
-        # ----------------------------------------------------------------
+        # VPC Interface Endpoints (no NAT needed)
+        # ──────────────────────────────────────────────────────────────
         for svc in [
             ec2.InterfaceVpcEndpointAwsService.RDS,
             ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
@@ -106,27 +95,26 @@ class PapersWithCodeStack(Stack):
                 vpc=vpc,
                 service=svc,
                 subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
-                security_groups=[lambda_sg],  # endpoints share the Lambda SG
+                security_groups=[lambda_sg],
             )
 
         # ──────────────────────────────────────────────────────────────
-        # ░█░█░█▀█░█░█░█▀▀░█░░░█▀▀
-        # ░█▀█░█▀█░█░█░█▀▀░█░░░▀▀█
-        # ░▀░▀░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀
-        # ----------------------------------------------------------------
-        # IAM role for all Lambdas
-        # ----------------------------------------------------------------
+        # IAM Role
+        # ──────────────────────────────────────────────────────────────
         lambda_role = iam.Role(
             self,
             "LambdaExecRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaVPCAccessExecutionRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaVPCAccessExecutionRole"
+                ),
             ],
         )
 
-        # IAM‑DB authentication permission (rds‑db:connect)
         lambda_role.add_to_policy(
             iam.PolicyStatement(
                 actions=["rds-db:connect"],
@@ -136,22 +124,19 @@ class PapersWithCodeStack(Stack):
             )
         )
 
-        # (Optional) Secrets Manager access if you need it in code
         if db_secret_name:
             lambda_role.add_to_policy(
                 iam.PolicyStatement(
                     actions=["secretsmanager:GetSecretValue"],
-                    resources=[f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:{db_secret_name}*"],
+                    resources=[
+                        f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:{db_secret_name}*"
+                    ],
                 )
             )
 
         # ──────────────────────────────────────────────────────────────
-        # ░█░█░█▀▀░█░█░█░░░█░█░█▀█░█▀▄
-        # ░█▀█░█▀▀░█░█░█░░░█░█░█▀█░█▀▄
-        # ░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀░▀
-        # ----------------------------------------------------------------
-        # Lambda definitions
-        # ----------------------------------------------------------------
+        # Lambda Functions
+        # ──────────────────────────────────────────────────────────────
         lambda_configs = [
             {
                 "name": "hello_world",
@@ -191,26 +176,27 @@ class PapersWithCodeStack(Stack):
                 timeout=Duration.seconds(30),
                 environment=cfg["env"],
                 vpc=vpc,
-                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
+                vpc_subnets=ec2.SubnetSelection(
+                    subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+                ),
                 security_groups=[lambda_sg],
             )
 
         # ──────────────────────────────────────────────────────────────
-        # ░█▀▀░█░█░█▀▀░█▄█░█░█░█▀▀
-        # ░█▀▀░█░█░█▀▀░█░█░█░█░█▀▀
-        # ░▀░░░▀▀▀░▀▀▀░▀░▀░▀▀▀░▀▀▀
-        # ----------------------------------------------------------------
+        # API Gateway
+        # ──────────────────────────────────────────────────────────────
         http_api = apigwv2.HttpApi(self, "ServerlessHttpApi")
 
         api_routes = [
-            {"lambda": "hello_world", "method": "GET",  "path": "/hello"},
-            {"lambda": "add_dummy",   "method": "POST", "path": "/dummy"},
-            {"lambda": "get_dummy",   "method": "GET",  "path": "/dummy"},
+            {"lambda": "hello_world", "method": "GET", "path": "/hello"},
+            {"lambda": "add_dummy", "method": "POST", "path": "/dummy"},
+            {"lambda": "get_dummy", "method": "GET", "path": "/dummy"},
         ]
 
         for route in api_routes:
             integration = apigwv2_integrations.HttpLambdaIntegration(
-                f"{route['lambda'].capitalize()}Integration", handler=lambdas[route["lambda"]]
+                f"{route['lambda'].capitalize()}Integration",
+                handler=lambdas[route["lambda"]],
             )
             http_api.add_routes(
                 path=route["path"],
