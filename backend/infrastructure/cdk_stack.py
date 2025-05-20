@@ -83,7 +83,7 @@ class PapersWithCodeStack(Stack):
         lambda_role.add_to_policy(iam.PolicyStatement(
             actions=["rds-db:connect"],
             resources=[
-                f"arn:aws:rds-db:{self.region}:{self.account}:dbuser:{cluster.cluster_resource_identifier}/{db_user}"
+            f"arn:aws:rds-db:{self.region}:{self.account}:dbuser:{cluster.cluster_resource_identifier}/{db_user}"
             ]
         ))
 
@@ -126,7 +126,7 @@ class PapersWithCodeStack(Stack):
                 timeout=Duration.seconds(30),
                 environment=cfg["env"],
                 vpc=vpc,
-                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+                vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_ISOLATED),
                 security_groups=[db_sg],
                 allow_public_subnet=True
             )
@@ -151,19 +151,7 @@ class PapersWithCodeStack(Stack):
                 methods=[apigwv2.HttpMethod[route["method"]]],
                 integration=integration
             )
-
-        # 7. Output API URL
-        CfnOutput(self, "ApiBaseUrl", value=http_api.api_endpoint)
-
-        # Create an Elastic IP for the NAT Gateway
-        eip = ec2.CfnEIP(self, "NatEip")
-
-        # Create the NAT Gateway in a public subnet
-        nat_gw = ec2.CfnNatGateway(
-            self, "NatGateway",
-            subnet_id=subnet_ids[0],  # Use the first public subnet
-            allocation_id=eip.attr_allocation_id
-        )
+    
 
         # Update the route table for each private subnet
         for i, subnet_id in enumerate(subnet_ids):
@@ -178,10 +166,4 @@ class PapersWithCodeStack(Stack):
                 subnet_id=subnet_id,
                 route_table_id=route_table.ref
             )
-            # Add a route to the NAT Gateway
-            ec2.CfnRoute(
-                self, f"PrivateRoute{i}",
-                route_table_id=route_table.ref,
-                destination_cidr_block="0.0.0.0/0",
-                nat_gateway_id=nat_gw.ref
-            )
+        
