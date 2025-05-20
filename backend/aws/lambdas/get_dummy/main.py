@@ -39,6 +39,13 @@ def get_connection():
         logger.error(traceback.format_exc())
         return None
 
+def json_default(obj):
+    import uuid
+    from datetime import datetime
+    if isinstance(obj, (uuid.UUID, datetime)):
+        return str(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
 def handler(event, context):
     global connection
     qparams = event.get("queryStringParameters") or {}
@@ -65,9 +72,9 @@ def handler(event, context):
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "id":          str(record[0]),
+                "id":          record[0],
                 "created_at":  record[1]
-            })
+            }, default=json_default)
         }
     except Exception as e:
         logger.error(f"Error: {str(e)}")
