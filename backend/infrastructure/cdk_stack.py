@@ -57,7 +57,7 @@ class PapersWithCodeStack(Stack):
             self,
             "LambdaSG",
             vpc=vpc,
-            description="Lambdas -> Aurora",
+            description="Lambdas_Aurora",
             allow_all_outbound=True,
         )
         aurora_sg.add_ingress_rule(lambda_sg, ec2.Port.tcp(5432), "Lambda to Aurora")
